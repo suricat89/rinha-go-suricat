@@ -182,6 +182,12 @@ func (cc *CustomerController) GetTransactions(c fiber.Ctx) error {
 			"error":   err,
 		})
 	}
+	if customer == nil {
+		return c.Status(404).JSON(&fiber.Map{
+			"message": "Customer not found",
+			"error":   nil,
+		})
+	}
 
 	if len(customer.Transactions) == 0 {
 		customer, err = cc.databaseRepository.GetCustomerData(customerId)
