@@ -1,17 +1,19 @@
 package controller
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/google/uuid"
+	"github.com/suricat89/rinha-2024-q1/src/interfaces"
 	"github.com/suricat89/rinha-2024-q1/src/model"
-	"github.com/suricat89/rinha-2024-q1/src/repository"
+	"github.com/suricat89/rinha-2024-q1/src/utils"
 )
 
 type CustomerController struct {
-	databaseRepository *repository.DatabaseRepository
-	cacheRepository    *repository.CacheRepository
+	databaseRepository interfaces.DatabaseRepository
+	cacheRepository    interfaces.CacheRepository
 }
 
 type RequestNewTransaction struct {
@@ -44,8 +46,8 @@ type ResponseGetTransactions struct {
 }
 
 func NewCustomerController(
-	databaseRepository *repository.DatabaseRepository,
-	cacheRepository *repository.CacheRepository,
+	databaseRepository interfaces.DatabaseRepository,
+	cacheRepository interfaces.CacheRepository,
 ) *CustomerController {
 	return &CustomerController{
 		databaseRepository,
@@ -54,6 +56,9 @@ func NewCustomerController(
 }
 
 func (cc *CustomerController) NewTransaction(c fiber.Ctx) error {
+	t := utils.NewTraceTime("controller", "NewTransaction")
+
+	t.Start("Validate request")
 	customerId, err := c.ParamsInt("id")
 	if err != nil {
 		return c.Status(404).JSON(&fiber.Map{
@@ -89,6 +94,7 @@ func (cc *CustomerController) NewTransaction(c fiber.Ctx) error {
 			"error":   nil,
 		})
 	}
+	t.End()
 
 	transaction := new(model.TransactionModel)
 	transaction.Datetime = time.Now()
@@ -96,18 +102,26 @@ func (cc *CustomerController) NewTransaction(c fiber.Ctx) error {
 	transaction.Type = reqBody.Type
 	transaction.Value = reqBody.Value
 
-	reqUuid := uuid.New().String()
+	reqUuid := uuid.NewString()
 
+	t.Start(fmt.Sprintf("cacheRepository.WaitForCustomerLock [%s]", reqUuid))
 	err = cc.cacheRepository.WaitForCustomerLock(customerId, reqUuid)
+	t.End()
 	if err != nil {
 		return c.Status(500).JSON(&fiber.Map{
 			"message": "Error waiting for customer lock",
 			"error":   err,
 		})
 	}
-	defer cc.cacheRepository.UnlockCustomer(customerId)
+	defer func(cause error) {
+		t.Start(fmt.Sprintf("cacheRepository.UnlockCustomer [%s]", reqUuid))
+		cc.cacheRepository.UnlockCustomer(customerId)
+		t.End()
+	}(err)
 
+	t.Start("databaseRepository.GetCustomerData")
 	customer, err := cc.databaseRepository.GetCustomerData(customerId)
+	t.End()
 	if err != nil {
 		return c.Status(500).JSON(&fiber.Map{
 			"message": "Error fetching database",
@@ -121,6 +135,7 @@ func (cc *CustomerController) NewTransaction(c fiber.Ctx) error {
 		})
 	}
 	transaction.Customer = customer
+	transaction.Id = reqUuid
 
 	if transaction.Type == "c" {
 		transaction.Customer.Balance += transaction.Value
@@ -135,7 +150,9 @@ func (cc *CustomerController) NewTransaction(c fiber.Ctx) error {
 		}
 	}
 
+	t.Start("databaseRepository.CreateTransaction")
 	err = cc.databaseRepository.CreateTransaction(transaction)
+	t.End()
 	if err != nil {
 		return c.Status(500).JSON(&fiber.Map{
 			"message": "Error trying to persist transaction",

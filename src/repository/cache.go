@@ -7,13 +7,14 @@ import (
 
 	"github.com/gofiber/fiber/v3/log"
 	"github.com/redis/go-redis/v9"
+	"github.com/suricat89/rinha-2024-q1/src/interfaces"
 )
 
 type CacheRepository struct {
 	Rdb *redis.Client
 }
 
-func NewCacheRepository(Rdb *redis.Client) *CacheRepository {
+func NewCacheRepository(Rdb *redis.Client) interfaces.CacheRepository {
 	return &CacheRepository{Rdb}
 }
 
@@ -26,7 +27,7 @@ func (r *CacheRepository) WaitForCustomerLock(customerId int, reqUuid string) er
 
 	sub := r.Rdb.PSubscribe(ctx, fmt.Sprintf("__keyspace*__:%s", customerKey))
 	ch := sub.Channel()
-  defer sub.Close()
+	defer sub.Close()
 
 	isReady, err := r.checkCustomerLock(ctx, reqUuid, customerKey)
 	if err != nil {

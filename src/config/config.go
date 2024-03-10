@@ -9,6 +9,12 @@ import (
 
 var Env struct {
 	Database struct {
+		// "postgresql" | "mongodb"
+		DatabaseSelected string `env:"DATABASE_SELECTED"`
+
+		// Uri used just in case MongoDB is selected
+		Uri string `env:"DATABASE_MONGODB_URI"`
+
 		Host               string `env:"DATABASE_HOST" envDefault:"localhost"`
 		Port               int    `env:"DATABASE_PORT" envDefault:"5432"`
 		User               string `env:"DATABASE_USER" envDefault:"root"`

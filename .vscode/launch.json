@@ -12,7 +12,11 @@
       "program": "${workspaceFolder}/cmd/rinha.go",
       "env": {
         "PORT": "9999",
-        "PREFORK_ENABLED": "false"
+        "LOG_LEVEL": "0",
+        "PREFORK_ENABLED": "false",
+        // "DATABASE_SELECTED": "postgresql",
+        "DATABASE_SELECTED": "mongodb",
+        "DATABASE_MONGODB_URI": "mongodb://root:root@localhost:27017/rinha2024q1?authSource=admin&readPreference=primary&appname=rinha-go-suricat&directConnection=true&ssl=false"
       }
     }
   ]

@@ -8,8 +8,9 @@ services:
     network_mode: "host"
     environment:
       PORT: '8080'
+      DATABASE_SELECTED: postgresql
       PREFORK_ENABLED: 'false'
-      LOG_LEVEL: '2'
+      LOG_LEVEL: '0'
       DATABASE_HOST: 'localhost'
       CACHE_HOST: 'localhost'
       PROFILING_ENABLED: 'false'
@@ -18,7 +19,7 @@ services:
     volumes:
       - ./prof:/app/prof
     depends_on:
-      - db
+      - db_postgres
       - redis
     deploy:
       resources:
@@ -30,8 +31,9 @@ services:
     <<: *api
     environment:
       PORT: '8081'
+      DATABASE_SELECTED: postgresql
       PREFORK_ENABLED: 'false'
-      LOG_LEVEL: '2'
+      LOG_LEVEL: '0'
       DATABASE_HOST: 'localhost'
       CACHE_HOST: 'localhost'
       PROFILING_ENABLED: 'false'
@@ -52,7 +54,7 @@ services:
           cpus: '0.05'
           memory: '13MB'
 
-  db: # Banco de dados
+  db_postgres: # Banco de dados
     image: postgres
     hostname: db
     network_mode: host
@@ -61,7 +63,7 @@ services:
       POSTGRES_PASSWORD: 1234
       POSTGRES_DB: rinha2024q1
     volumes:
-      - ./conf/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./conf/init-postgres.sql:/docker-entrypoint-initdb.d/init.sql
       - ./conf/postgresql.conf:/docker-entrypoint-initdb.d/postgresql.conf
     command: postgres -c config_file=/docker-entrypoint-initdb.d/postgresql.conf
     healthcheck:
