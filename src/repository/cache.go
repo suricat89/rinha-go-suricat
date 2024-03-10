@@ -25,31 +25,34 @@ func (r *CacheRepository) WaitForCustomerLock(customerId int, reqUuid string) er
 	log.Debugf("[%s] Waiting to lock customer '%d'", reqUuid, customerId)
 	defer log.Debugf("[%s] Customer '%d' locked with success", reqUuid, customerId)
 
-	sub := r.Rdb.PSubscribe(ctx, fmt.Sprintf("__keyspace*__:%s", customerKey))
-	ch := sub.Channel()
-	defer sub.Close()
+	chFinished := make(chan bool)
+	chErr := make(chan error)
+	go func(chFinished chan bool, chErr chan error) {
+		for {
+			after := time.After(5 * time.Millisecond)
 
-	isReady, err := r.checkCustomerLock(ctx, reqUuid, customerKey)
-	if err != nil {
-		return err
-	}
-	if isReady {
-		return nil
-	}
+			isReady, err := r.checkCustomerLock(ctx, reqUuid, customerKey)
+			if err != nil {
+				chErr <- err
+				return
+			}
+			if isReady {
+				chFinished <- true
+				return
+			}
 
-	for range ch {
-		isReady, err := r.checkCustomerLock(ctx, reqUuid, customerKey)
-		if err != nil {
-			log.Debugf("[%s] Exiting channel with error '%s'", reqUuid, err.Error())
-			return err
+			<-after
 		}
-		if isReady {
-			log.Debugf("[%s] Exiting channel with customer '%d' ready", reqUuid, customerId)
-			return nil
-		}
-	}
+	}(chFinished, chErr)
 
-	return nil
+  for {
+    select {
+    case err := <-chErr:
+      return err
+    case <-chFinished:
+      return nil
+    }  
+  }
 }
 
 func (r *CacheRepository) getCustomerKey(customerId int) string {
