@@ -30,15 +30,13 @@ func (r *DatabaseRepository) CreateTransaction(transaction *model.TransactionMod
 
 	_, err = tx.Exec(
 		context.Background(),
-		`INSERT INTO "transaction" ("customer_id", "value", "type", "description", "datetime", "current_balance", "current_limit")
-     VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+		`INSERT INTO "transaction" ("customer_id", "value", "type", "description", "datetime")
+     VALUES ($1, $2, $3, $4, $5)`,
 		transaction.Customer.Id,
 		transaction.Value,
 		transaction.Type,
 		transaction.Description,
 		transaction.Datetime,
-		transaction.Customer.Balance,
-		transaction.Customer.Limit,
 	)
 	if err != nil {
 		tx.Rollback(context.Background())

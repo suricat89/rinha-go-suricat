@@ -12,8 +12,6 @@ CREATE TABLE IF NOT EXISTS "transaction" (
   "type" CHAR(1) NOT NULL,
   "description" VARCHAR(10),
   "datetime" TIMESTAMPTZ NOT NULL,
-  "current_balance" NUMERIC(15,0) NOT NULL,
-  "current_limit" NUMERIC(15,0) NOT NULL,
   CONSTRAINT "PK_TRANSACTION" PRIMARY KEY ("id"),
   CONSTRAINT "FK_TRANSACTION_CUSTOMER" FOREIGN KEY ("customer_id") REFERENCES "customer"("id")
 );
