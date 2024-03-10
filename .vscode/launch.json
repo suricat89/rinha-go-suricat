@@ -12,7 +12,7 @@
       "program": "${workspaceFolder}/cmd/rinha.go",
       "env": {
         "PORT": "9999",
-        "PREFORK_ENABLED": "true"
+        "PREFORK_ENABLED": "false"
       }
     }
   ]
