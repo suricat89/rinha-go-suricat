@@ -52,7 +52,10 @@ func main() {
 		startProfiling()
 	}
 
-	app := fiber.New()
+	app := fiber.New(fiber.Config{
+    Concurrency: 256,
+    ReduceMemoryUsage: true,
+  })
 
 	app.Use(logger.New())
 	log.SetLevel(config.Env.Server.LogLevel)
