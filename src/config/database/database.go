@@ -18,7 +18,7 @@ func InitDb() error {
 	var err error
 
   connStr := fmt.Sprintf(
-		"dbname=%s user=%s password=%s host=%s port=%d application_name=%s sslmode=%s timezone=%s pool_min_conns=%d pool_min_conns=%d",
+		"dbname=%s user=%s password=%s host=%s port=%d application_name=%s sslmode=%s timezone=%s pool_min_conns=%d pool_max_conns=%d",
 		cfg.DB,
 		cfg.User,
 		cfg.Password,
