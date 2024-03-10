@@ -24,6 +24,10 @@ func (r *CacheRepository) WaitForCustomerLock(customerId int, reqUuid string) er
 	log.Debugf("[%s] Waiting to lock customer '%d'", reqUuid, customerId)
 	defer log.Debugf("[%s] Customer '%d' locked with success", reqUuid, customerId)
 
+	sub := r.Rdb.PSubscribe(ctx, fmt.Sprintf("__keyspace*__:%s", customerKey))
+	ch := sub.Channel()
+  defer sub.Close()
+
 	isReady, err := r.checkCustomerLock(ctx, reqUuid, customerKey)
 	if err != nil {
 		return err
@@ -31,10 +35,6 @@ func (r *CacheRepository) WaitForCustomerLock(customerId int, reqUuid string) er
 	if isReady {
 		return nil
 	}
-
-	sub := r.Rdb.PSubscribe(ctx, fmt.Sprintf("__keyspace*__:%s", customerKey))
-	ch := sub.Channel()
-  defer sub.Close()
 
 	for range ch {
 		isReady, err := r.checkCustomerLock(ctx, reqUuid, customerKey)
